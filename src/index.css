@@ -3,71 +3,80 @@
 @tailwind utilities;
 
 /* PsyThink — ÁUREA CORA Design System
-   Dark navy clinical UI with violet/cyan accents.
-   All colors HSL. Use semantic tokens only.
+   Quiet luxury healthtech. Warm neutrals + sage/marine + muted copper.
+   60/30/10 palette. All HSL.
 */
 
 @layer base {
   :root {
+    /* 60% — Warm neutral base (off-white cream / mist) */
+    --background: 38 30% 96%;            /* #F7F1E3-ish warm cream */
+    --foreground: 215 18% 18%;           /* deep slate ink */
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 18% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 18% 18%;
+
+    /* 30% — Calm clinical secondaries */
+    --primary: 213 28% 35%;              /* marine blue #4B6584 */
+    --primary-foreground: 38 30% 98%;
+    --primary-glow: 213 28% 50%;
+
+    --secondary: 38 18% 92%;             /* sand */
+    --secondary-foreground: 215 18% 22%;
+
+    --muted: 38 16% 90%;
+    --muted-foreground: 215 10% 42%;
+
+    --accent: 130 8% 45%;                /* sage / olive #6A7B6D */
+    --accent-foreground: 38 30% 98%;
+
+    /* 10% — Highlight / CTA / alerts */
+    --highlight: 30 35% 52%;             /* muted copper / bege acobreado #C4A484 darker */
+    --highlight-foreground: 38 30% 98%;
+    --lavender: 230 25% 66%;             /* tech lavender #8A95C5 */
+    --gold: 42 55% 58%;                  /* pale gold */
+    --terracotta: 14 45% 55%;            /* muted terracotta */
+
+    --destructive: 14 45% 50%;
+    --destructive-foreground: 38 30% 98%;
+
+    --success: 145 25% 42%;
+    --warning: 30 55% 50%;
+    --info: 213 28% 45%;
+
+    --border: 38 14% 86%;
+    --input: 38 14% 88%;
+    --ring: 213 28% 45%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar — slightly deeper neutral so it reads as a chrome panel */
+    --sidebar-background: 38 18% 94%;
+    --sidebar-foreground: 215 14% 28%;
+    --sidebar-primary: 213 28% 35%;
+    --sidebar-primary-foreground: 38 30% 98%;
+    --sidebar-accent: 38 14% 88%;
+    --sidebar-accent-foreground: 213 28% 25%;
+    --sidebar-border: 38 14% 84%;
+    --sidebar-ring: 213 28% 45%;
+
     /* Surfaces */
-    --background: 230 45% 6%;
-    --foreground: 215 30% 92%;
+    --surface-elev: 0 0% 100%;
+    --surface-soft: 38 22% 94%;
 
-    --card: 230 40% 9%;
-    --card-foreground: 215 30% 92%;
+    /* Gradients (subtle) */
+    --gradient-aurora: linear-gradient(135deg, hsl(213 28% 35% / 0.08), hsl(130 8% 45% / 0.06) 60%, hsl(30 35% 52% / 0.05));
+    --gradient-hero: linear-gradient(135deg, hsl(213 28% 35%), hsl(213 28% 45%));
+    --gradient-copper: linear-gradient(135deg, hsl(30 35% 52%), hsl(30 35% 60%));
+    --gradient-stream: linear-gradient(90deg, transparent, hsl(213 28% 45% / 0.35), transparent);
 
-    --popover: 230 45% 8%;
-    --popover-foreground: 215 30% 92%;
-
-    /* Brand */
-    --primary: 220 95% 62%;            /* deep electric blue */
-    --primary-foreground: 230 50% 6%;
-    --primary-glow: 200 100% 65%;      /* cyan glow */
-
-    --secondary: 232 35% 14%;
-    --secondary-foreground: 215 25% 88%;
-
-    --muted: 230 30% 13%;
-    --muted-foreground: 220 15% 60%;
-
-    --accent: 270 85% 65%;             /* violet */
-    --accent-foreground: 230 50% 6%;
-
-    --destructive: 358 75% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --success: 152 70% 48%;
-    --warning: 38 95% 60%;
-    --info: 200 100% 65%;
-
-    --border: 230 30% 16%;
-    --input: 230 30% 14%;
-    --ring: 220 95% 62%;
-
-    --radius: 0.85rem;
-
-    /* Sidebar */
-    --sidebar-background: 232 50% 5%;
-    --sidebar-foreground: 220 18% 75%;
-    --sidebar-primary: 220 95% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 232 40% 11%;
-    --sidebar-accent-foreground: 215 30% 92%;
-    --sidebar-border: 230 35% 12%;
-    --sidebar-ring: 220 95% 62%;
-
-    /* Gradients */
-    --gradient-aurora: radial-gradient(ellipse at 30% 50%, hsl(220 95% 50% / 0.35), transparent 60%),
-                       radial-gradient(ellipse at 75% 60%, hsl(270 85% 55% / 0.3), transparent 60%),
-                       radial-gradient(ellipse at 50% 100%, hsl(200 100% 55% / 0.25), transparent 70%);
-    --gradient-hero: linear-gradient(135deg, hsl(220 95% 62%), hsl(270 85% 65%));
-    --gradient-stream: linear-gradient(90deg, transparent, hsl(200 100% 65% / 0.6), transparent);
-    --gradient-card: linear-gradient(160deg, hsl(232 40% 12% / 0.8), hsl(230 45% 8% / 0.6));
-
-    /* Shadows */
-    --shadow-glow: 0 0 40px hsl(220 95% 62% / 0.35);
-    --shadow-violet: 0 0 30px hsl(270 85% 65% / 0.3);
-    --shadow-card: 0 10px 40px -12px hsl(230 60% 2% / 0.6);
+    /* Shadows — soft, premium */
+    --shadow-card: 0 1px 2px hsl(215 18% 18% / 0.04), 0 8px 24px -12px hsl(215 18% 18% / 0.08);
+    --shadow-soft: 0 1px 3px hsl(215 18% 18% / 0.05);
+    --shadow-glow: 0 0 0 1px hsl(213 28% 45% / 0.12), 0 8px 28px -10px hsl(213 28% 35% / 0.18);
 
     /* Motion */
     --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
@@ -86,8 +95,8 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv11', 'ss01';
     background-image:
-      radial-gradient(ellipse 1200px 600px at 20% -10%, hsl(220 95% 30% / 0.18), transparent 60%),
-      radial-gradient(ellipse 900px 500px at 90% 10%, hsl(270 85% 35% / 0.15), transparent 60%);
+      radial-gradient(ellipse 1200px 600px at 0% 0%, hsl(38 30% 92% / 0.7), transparent 60%),
+      radial-gradient(ellipse 900px 500px at 100% 100%, hsl(130 8% 88% / 0.5), transparent 60%);
     background-attachment: fixed;
   }
   h1, h2, h3, h4 {
@@ -99,30 +108,20 @@
 @layer utilities {
   .bg-aurora { background-image: var(--gradient-aurora); }
   .bg-hero { background-image: var(--gradient-hero); }
-  .bg-card-elev { background-image: var(--gradient-card); }
+  .bg-copper { background-image: var(--gradient-copper); }
+  .bg-card-elev { background-color: hsl(var(--surface-elev)); }
+  .bg-surface-soft { background-color: hsl(var(--surface-soft)); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
-  .shadow-violet { box-shadow: var(--shadow-violet); }
-  .text-glow { text-shadow: 0 0 20px hsl(var(--primary-glow) / 0.6); }
-
-  .scanline::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: var(--gradient-stream);
-    background-size: 200% 100%;
-    animation: scan 2.5s linear infinite;
-    pointer-events: none;
-    opacity: 0.5;
-  }
 
   .glass {
-    background: hsl(230 40% 10% / 0.55);
+    background: hsl(0 0% 100% / 0.75);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border: 1px solid hsl(220 60% 50% / 0.12);
+    border: 1px solid hsl(var(--border));
   }
 
-  /* Custom scrollbar */
   .scroll-soft::-webkit-scrollbar { width: 8px; height: 8px; }
   .scroll-soft::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
@@ -131,19 +130,9 @@
   .scroll-soft::-webkit-scrollbar-track { background: transparent; }
 }
 
-@keyframes scan {
-  0% { background-position: -100% 0; }
-  100% { background-position: 200% 0; }
-}
-
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
-}
-
-@keyframes orbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  50% { opacity: 0.4; transform: scale(0.85); }
 }
 
 @keyframes blink-caret {
@@ -152,8 +141,8 @@
 }
 
 @keyframes step-in {
-  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes shimmer {
@@ -161,7 +150,11 @@
   100% { background-position: 400px 0; }
 }
 
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
-  50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.6), 0 0 60px hsl(var(--accent) / 0.3); }
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes typing-dots {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-2px); }
 }
