@@ -14,7 +14,7 @@ export function ClinicalReasoningStream({ onComplete }: { onComplete?: () => voi
     const t = setTimeout(() => {
       setDone((d) => new Set(d).add(reasoningSteps[active].id));
       setActive((a) => a + 1);
-    }, 950);
+    }, 850);
     return () => clearTimeout(t);
   }, [active, onComplete]);
 
@@ -22,31 +22,31 @@ export function ClinicalReasoningStream({ onComplete }: { onComplete?: () => voi
     sinais: mockContextPack.signals.length,
     riscos: mockContextPack.risks.length,
     evidencias: mockContextPack.evidence.length,
-    interacoes: 0,
+    lacunas: mockContextPack.gaps.length,
   };
 
   return (
-    <section className="space-y-5">
-      <header className="space-y-1.5">
-        <div className="text-[10px] uppercase tracking-[0.25em] text-primary-glow font-semibold">
+    <section className="space-y-4">
+      <header className="space-y-1">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-semibold">
           Clinical Reasoning Stream
         </div>
-        <h2 className="font-display text-2xl font-bold tracking-tight">
-          Fluxo progressivo do raciocínio clínico do PsyMatrix
+        <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
+          Raciocínio clínico em tempo real
         </h2>
-        <p className="text-sm text-muted-foreground max-w-3xl">
-          ÁUREA CORA mostra o raciocínio por etapas, sem esconder risco, evidência, interações ou a próxima ação atrás de módulos secundários.
+        <p className="text-[13px] text-muted-foreground max-w-2xl">
+          Cada passo é rastreável: sinais, riscos, evidências, lacunas e ações ficam visíveis sem se esconder atrás de módulos secundários.
         </p>
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap gap-1.5 pt-1">
           {[
             ["sinais", counts.sinais],
-            ["riscos", counts.riscos],
+            ["lacunas", counts.lacunas],
             ["evidências", counts.evidencias],
-            ["interações", counts.interacoes],
+            ["riscos", counts.riscos],
           ].map(([k, v]) => (
             <span
               key={k as string}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-secondary/60 border border-border text-muted-foreground"
+              className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-soft border border-border text-muted-foreground"
             >
               <span className="text-foreground font-semibold mr-1">{v as number}</span>
               {k as string}
@@ -55,7 +55,7 @@ export function ClinicalReasoningStream({ onComplete }: { onComplete?: () => voi
         </div>
       </header>
 
-      <ol className="space-y-3">
+      <ol className="space-y-2">
         {reasoningSteps.map((step, idx) => {
           const isDone = done.has(step.id);
           const isActive = idx === active;
@@ -65,42 +65,39 @@ export function ClinicalReasoningStream({ onComplete }: { onComplete?: () => voi
           return (
             <li
               key={step.id}
-              className="group relative flex gap-4 rounded-xl border border-border/60 bg-card-elev p-4 animate-step-in overflow-hidden"
+              className="group relative flex gap-3.5 rounded-lg border border-border bg-card-elev shadow-soft p-3.5 animate-step-in"
             >
-              {isActive && (
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary-glow to-transparent animate-shimmer" />
-              )}
-
               <div className="shrink-0">
                 <div
-                  className={`relative grid h-9 w-9 place-items-center rounded-full border ${
+                  className={`relative grid h-7 w-7 place-items-center rounded-full ${
                     isDone
-                      ? "border-success/50 bg-success/10 text-success"
-                      : "border-primary/40 bg-primary/10 text-primary-glow"
+                      ? "bg-success/12 text-success"
+                      : "bg-primary/10 text-primary"
                   }`}
                 >
                   {isDone ? (
-                    <Check className="h-4 w-4" />
+                    <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
                   ) : (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   )}
-                  <span className="absolute -bottom-1 -right-1 text-[9px] font-mono text-muted-foreground bg-background border border-border rounded px-1">
-                    {idx + 1}
-                  </span>
                 </div>
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-primary-glow/90 font-semibold">
-                  {step.tag}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-primary font-semibold">
+                    {step.tag}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/60">·</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">{`0${idx + 1}`.slice(-2)}</span>
                 </div>
-                <div className="text-base font-semibold text-foreground mt-0.5">
+                <div className="text-[14px] font-medium text-foreground mt-0.5">
                   {step.title}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{step.body}</p>
-                {step.detail && (
-                  <p className="text-[12px] text-muted-foreground/80 mt-2 font-mono leading-relaxed">
-                    › {step.detail}
+                <p className="text-[13px] text-muted-foreground mt-0.5">{step.body}</p>
+                {step.detail && isDone && (
+                  <p className="text-[12px] text-muted-foreground/80 mt-1.5 leading-relaxed border-l-2 border-border pl-2.5">
+                    {step.detail}
                   </p>
                 )}
               </div>

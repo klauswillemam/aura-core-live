@@ -152,7 +152,7 @@ export const clinicalActions: ClinicalAction[] = [
     id: "a3",
     title: "Gerar EEM (Exame do Estado Mental)",
     reason: "Nenhum EEM nesta consulta. Obrigatório para fechamento clínico.",
-    module: "MSE Builder",
+    module: "PsyNote · Document Engine",
     saves: "EEM estruturado + assinatura no PsyNote",
     workspaceLink: "/workspace/mse/new",
     priority: "alta",

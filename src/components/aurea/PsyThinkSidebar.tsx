@@ -3,20 +3,21 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  Mic, Sparkles, Zap, BarChart3, FileText, FlaskConical, Pill, ShieldAlert,
-  BookOpen, Globe, Library, Settings, LayoutDashboard, Brain,
+  Mic, Zap, BarChart3, FileText, FlaskConical, Pill, ShieldAlert,
+  BookOpen, Globe, Library, Settings, UserCheck, Stethoscope,
 } from "lucide-react";
+import { PsyThinkLogo } from "./PsyThinkLogo";
 
 const groups = [
   {
     label: "Paciente",
-    items: [{ title: "Workspace", icon: LayoutDashboard, url: "#workspace" }],
+    items: [{ title: "Workspace", icon: UserCheck, url: "#workspace" }],
   },
   {
     label: "Core Workflow",
     items: [
       { title: "PsyNote", icon: Mic, url: "#psynote" },
-      { title: "MSE Builder", icon: Brain, url: "#mse" },
+      { title: "MSE Builder", icon: Stethoscope, url: "#mse" },
       { title: "MSE Flash", icon: Zap, url: "#mseflash" },
     ],
   },
@@ -49,16 +50,13 @@ export function PsyThinkSidebar() {
   const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="px-4 py-5">
         <div className="flex items-center gap-3">
-          <div className="relative h-9 w-9 shrink-0 rounded-xl bg-hero shadow-glow grid place-items-center">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-            <div className="absolute inset-0 rounded-xl animate-glow-pulse" />
-          </div>
+          <PsyThinkLogo className="h-9 w-9 shrink-0" />
           {!collapsed && (
             <div className="leading-tight">
-              <div className="font-display font-bold text-base tracking-tight text-foreground">
+              <div className="font-display font-bold text-lg tracking-tight text-foreground">
                 PsyThink
               </div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -73,7 +71,7 @@ export function PsyThinkSidebar() {
         {groups.map((g) => (
           <SidebarGroup key={g.label}>
             {!collapsed && (
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 px-3">
                 {g.label}
               </SidebarGroupLabel>
             )}
@@ -81,10 +79,15 @@ export function PsyThinkSidebar() {
               <SidebarMenu>
                 {g.items.map((it) => (
                   <SidebarMenuItem key={it.title}>
-                    <SidebarMenuButton asChild className="hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent">
+                    <SidebarMenuButton
+                      asChild
+                      className="hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent"
+                    >
                       <a href={it.url} className="group flex items-center gap-3">
-                        <it.icon className="h-4 w-4 text-primary-glow group-hover:text-primary transition-colors" />
-                        {!collapsed && <span className="text-sm">{it.title}</span>}
+                        <it.icon className="h-4 w-4 text-primary group-hover:text-accent transition-colors" />
+                        {!collapsed && (
+                          <span className="text-sm text-sidebar-foreground">{it.title}</span>
+                        )}
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
