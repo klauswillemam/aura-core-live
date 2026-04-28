@@ -158,3 +158,44 @@
   0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
   30% { opacity: 1; transform: translateY(-2px); }
 }
+
+@keyframes stream-sweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes ghost-out {
+  from { opacity: 0.55; filter: blur(0); transform: translateY(0); }
+  to { opacity: 0; filter: blur(2px); transform: translateY(-8px); }
+}
+
+@keyframes payload-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes payload-fade {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
+
+@layer utilities {
+  .animate-pulse-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+  .animate-blink-caret { animation: blink-caret 1s steps(2) infinite; }
+  .animate-step-in { animation: step-in .35s var(--transition-smooth) both; }
+  .animate-spin-slow { animation: spin-slow 3.2s linear infinite; }
+  .animate-fade-in { animation: step-in .4s var(--transition-smooth) both; }
+  .animate-ghost-out { animation: ghost-out .9s var(--transition-smooth) forwards; }
+  .animate-payload-rise { animation: payload-rise .45s var(--transition-smooth) both; }
+  .animate-payload-fade { animation: payload-fade .6s var(--transition-smooth) forwards; }
+
+  .stream-sweep::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: var(--gradient-stream);
+    transform: translateX(-100%);
+    animation: stream-sweep 2.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
