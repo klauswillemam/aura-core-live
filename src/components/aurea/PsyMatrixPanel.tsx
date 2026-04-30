@@ -305,7 +305,7 @@ function Bubble({ msg }: { msg: Msg }) {
       <div className="text-[12.5px] text-foreground leading-relaxed whitespace-pre-line">
         {msg.content}
       </div>
-      {msg.evidence && (
+      {msg.evidence && msg.evidence.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {msg.evidence.map((e) => (
             <span
@@ -315,6 +315,14 @@ function Bubble({ msg }: { msg: Msg }) {
               {e.label} <ExternalLink className="h-2.5 w-2.5 opacity-60" />
             </span>
           ))}
+        </div>
+      )}
+      {msg.sentToCora && (
+        <div className="mt-2 flex items-center gap-1.5 text-[10.5px] text-primary bg-primary/8 border border-primary/20 rounded-md px-2 py-1 animate-step-in">
+          <ArrowRight className="h-3 w-3" />
+          <span className="font-medium">enviei 1 ação para a CORA:</span>
+          <span className="text-foreground/85">{msg.sentToCora.title}</span>
+          <span className="text-muted-foreground">· {msg.sentToCora.module}</span>
         </div>
       )}
     </div>
