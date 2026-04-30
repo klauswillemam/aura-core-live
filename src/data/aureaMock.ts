@@ -245,7 +245,113 @@ export type ClinicalAction = {
   workspaceLink: string;
   priority: "alta" | "média" | "baixa";
   icon: string;
+  fromChat?: boolean; // true when the action was triggered by a doctor question in the chat
+  chatQuery?: string; // original question text, shown on hover
 };
+
+/* ───────────────── Chat → CORA intent detector (mock) ────────────────── */
+// Conservative: only emits an action when the question clearly implies one.
+// Returns a ClinicalAction (without id/fromChat) or null.
+
+export type ChatActionDraft = Omit<ClinicalAction, "id" | "fromChat" | "chatQuery"> & {
+  replySummary: string;
+  replyEvidence: { label: string }[];
+};
+
+export function detectChatAction(raw: string): ChatActionDraft | null {
+  const q = raw.toLowerCase().trim();
+  if (!q) return null;
+
+  const has = (...terms: string[]) => terms.some((t) => q.includes(t));
+
+  // Evidence / guideline / tapering / protocol → open PsyEvidence
+  if (
+    has("evidência", "evidencia", "evidence", "diretriz", "guideline", "protocolo", "desmame", "tapering", "taper")
+  ) {
+    const topic = extractTopic(q) ?? "tema da pergunta";
+    return {
+      title: `Abrir PsyEvidence — ${topic}`,
+      reason: `Pergunta do médico no chat: "${raw}". Buscar referências auditáveis antes de decidir.`,
+      module: "PsyEvidence",
+      saves: "Referências citáveis vinculadas à nota da consulta",
+      workspaceLink: "/workspace/evidence",
+      priority: "alta",
+      icon: "BookOpen",
+      replySummary:
+        topic.includes("bzd") || topic.includes("benzo") || topic.includes("clonazepam")
+          ? "Para desmame de BZD, evidência consistente recomenda redução gradual de 10–25% da dose a cada 2 semanas, individualizada por tempo de uso, dose e resposta. Substituição por BZD de meia-vida longa (diazepam) é opção em casos selecionados. CBT-I melhora desfecho quando há insônia de base."
+          : `Posso abrir o PsyEvidence focado em ${topic} para você revisar as fontes antes de decidir.`,
+      replyEvidence: [
+        { label: "Cochrane 2024 · BZD long-term" },
+        { label: "NICE CG185" },
+        { label: "BMJ Best Practice" },
+      ],
+    };
+  }
+
+  // Scale application
+  if (has("phq-9", "phq9", "gad-7", "gad7", "isi", "moca", "c-ssrs", "cssrs", "aplicar escala", "escala")) {
+    const scale = ["PHQ-9", "GAD-7", "ISI", "MoCA", "C-SSRS"].find((s) => q.includes(s.toLowerCase())) ?? "escala";
+    return {
+      title: `Aplicar ${scale}`,
+      reason: `Solicitado no chat: "${raw}".`,
+      module: "PsyScales",
+      saves: `Score ${scale} + delta longitudinal no ContextPack`,
+      workspaceLink: "/workspace/scales",
+      priority: "alta",
+      icon: "ClipboardList",
+      replySummary: `Posso preparar a aplicação de ${scale} agora — você confirma na fila da CORA.`,
+      replyEvidence: [],
+    };
+  }
+
+  // Drug interaction
+  if (has("interação", "interacao", "interaction", "cyp", "interage")) {
+    return {
+      title: "Checar interações no PsyInteractions",
+      reason: `Pergunta do médico: "${raw}".`,
+      module: "PsyInteractions",
+      saves: "Relatório de interações vinculado à consulta",
+      workspaceLink: "/workspace/interactions",
+      priority: "alta",
+      icon: "ShieldAlert",
+      replySummary:
+        "Vou abrir o PsyInteractions com o perfil farmacológico ativo. Fluoxetina é inibidor potente de CYP2D6 — pode elevar bupropiona; clonazepam soma sedação.",
+      replyEvidence: [{ label: "Lexicomp · CYP2D6" }, { label: "Stockley's Drug Interactions" }],
+    };
+  }
+
+  // Workup / labs / exames
+  if (has("exame", "exames", "laboratorial", "workup", "labs", "tsh", "b12", "ferritina")) {
+    return {
+      title: "Sugerir workup laboratorial",
+      reason: `Pergunta do médico: "${raw}".`,
+      module: "PsyClinic",
+      saves: "Solicitação estruturada no histórico clínico",
+      workspaceLink: "/workspace/clinic/workup",
+      priority: "alta",
+      icon: "FlaskConical",
+      replySummary:
+        "Painel sugerido: hemograma, ferritina, B12, folato, 25-OH vit D, TSH/T4L, glicemia/HbA1c, função renal/hepática, eletrólitos.",
+      replyEvidence: [{ label: "BMJ Best Practice · Fatigue" }],
+    };
+  }
+
+  return null;
+}
+
+function extractTopic(q: string): string | null {
+  if (q.includes("bzd") || q.includes("benzodiaz") || q.includes("clonazepam") || q.includes("benzo")) {
+    return "desmame de BZD";
+  }
+  if (q.includes("fluoxetina")) return "fluoxetina";
+  if (q.includes("bupropiona")) return "bupropiona";
+  if (q.includes("depress")) return "depressão";
+  // Try to capture "sobre X" or "de X"
+  const m = q.match(/(?:sobre|de|do|da|para)\s+([a-zà-ú0-9\-\s]{3,40})/i);
+  if (m) return m[1].trim().split(/[?.,;]/)[0].trim();
+  return null;
+}
 
 export const clinicalActions: ClinicalAction[] = [
   {

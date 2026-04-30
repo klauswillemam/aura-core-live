@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Sparkles, Maximize2, MoreHorizontal, ExternalLink, Brain, BookOpen, AlertCircle, ArrowRight, Check, CircleDashed } from "lucide-react";
-import { reasoningSteps, mockOverlay, mockContextPack, type ReasoningStep, type EvidenceRef } from "@/data/aureaMock";
+import { Send, Sparkles, Maximize2, MoreHorizontal, ExternalLink, Brain, BookOpen, AlertCircle, ArrowRight, Check, CircleDashed, MessageSquare } from "lucide-react";
+import { reasoningSteps, mockOverlay, mockContextPack, detectChatAction, type ReasoningStep, type EvidenceRef } from "@/data/aureaMock";
+import { emitCoraAction } from "@/lib/coraBus";
 
 type Msg = {
   role: "user" | "assistant";
   content: React.ReactNode;
   time: string;
   evidence?: { label: string }[];
+  sentToCora?: { title: string; module: string };
 };
 
 export function PsyMatrixPanel() {
@@ -95,18 +97,47 @@ function PanelBody() {
     const q = input;
     setMessages((m) => [...m, { role: "user", content: q, time: "agora" }]);
     setInput("");
+
     setTimeout(() => {
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          time: "agora",
-          content:
-            "Sugiro: (1) priorizar workup laboratorial pela queixa cognitiva nova + BZD crônico; (2) reaplicar PHQ-9 e ISI antes de qualquer ajuste; (3) revisar interação fluoxetina↔bupropiona via CYP2D6.",
-          evidence: [{ label: "NICE NG222" }, { label: "Cochrane 2024 · BZD" }],
-        },
-      ]);
-    }, 700);
+      const draft = detectChatAction(q);
+
+      if (draft) {
+        const action = {
+          id: `chat-${Date.now()}`,
+          title: draft.title,
+          reason: draft.reason,
+          module: draft.module,
+          saves: draft.saves,
+          workspaceLink: draft.workspaceLink,
+          priority: draft.priority,
+          icon: draft.icon,
+          fromChat: true as const,
+          chatQuery: q,
+        };
+        emitCoraAction(action);
+
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            time: "agora",
+            content: draft.replySummary,
+            evidence: draft.replyEvidence,
+            sentToCora: { title: draft.title, module: draft.module },
+          },
+        ]);
+      } else {
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            time: "agora",
+            content:
+              "Posso aprofundar — me diga se você quer evidência (abro PsyEvidence), uma escala (PsyScales), checagem de interação (PsyInteractions) ou exames (PsyClinic) e eu mando direto pra fila da CORA.",
+          },
+        ]);
+      }
+    }, 600);
   };
 
   return (
@@ -274,7 +305,7 @@ function Bubble({ msg }: { msg: Msg }) {
       <div className="text-[12.5px] text-foreground leading-relaxed whitespace-pre-line">
         {msg.content}
       </div>
-      {msg.evidence && (
+      {msg.evidence && msg.evidence.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {msg.evidence.map((e) => (
             <span
@@ -284,6 +315,14 @@ function Bubble({ msg }: { msg: Msg }) {
               {e.label} <ExternalLink className="h-2.5 w-2.5 opacity-60" />
             </span>
           ))}
+        </div>
+      )}
+      {msg.sentToCora && (
+        <div className="mt-2 flex items-center gap-1.5 text-[10.5px] text-primary bg-primary/8 border border-primary/20 rounded-md px-2 py-1 animate-step-in">
+          <ArrowRight className="h-3 w-3" />
+          <span className="font-medium">enviei 1 ação para a CORA:</span>
+          <span className="text-foreground/85">{msg.sentToCora.title}</span>
+          <span className="text-muted-foreground">· {msg.sentToCora.module}</span>
         </div>
       )}
     </div>
