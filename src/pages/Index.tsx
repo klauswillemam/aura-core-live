@@ -1,8 +1,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { PsyThinkSidebar } from "@/components/aurea/PsyThinkSidebar";
 import { TopBar } from "@/components/aurea/TopBar";
-import { AureaCoraLive } from "@/components/aurea/AureaCoraLive";
-import { ActionDeck } from "@/components/aurea/ActionDeck";
+import { CoraCockpit } from "@/components/aurea/CoraCockpit";
 import { PsyMatrixPanel } from "@/components/aurea/PsyMatrixPanel";
 import { mockPatient } from "@/data/aureaMock";
 
@@ -33,14 +32,11 @@ const Index = () => {
                   </p>
                 </section>
 
-                {/* The living IA — reasoning + signals + risk + scales + evidence + gaps + command */}
-                <AureaCoraLive />
-
-                {/* Executable actions */}
-                <ActionDeck />
+                {/* CORA cockpit — Agora · Fila · Histórico */}
+                <CoraCockpit />
 
                 <footer className="py-6 text-center text-[10px] text-muted-foreground/60 uppercase tracking-[0.22em]">
-                  PsyThink · raciocínio clínico rastreável
+                  PsyMatrix pensa · Médico decide · CORA executa
                 </footer>
               </div>
             </main>
