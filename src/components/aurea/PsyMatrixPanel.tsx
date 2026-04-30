@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Sparkles, Maximize2, MoreHorizontal, ExternalLink, Brain, BookOpen, AlertCircle, ArrowRight, Check, CircleDashed } from "lucide-react";
-import { reasoningSteps, mockOverlay, mockContextPack, type ReasoningStep, type EvidenceRef } from "@/data/aureaMock";
+import { Send, Sparkles, Maximize2, MoreHorizontal, ExternalLink, Brain, BookOpen, AlertCircle, ArrowRight, Check, CircleDashed, MessageSquare } from "lucide-react";
+import { reasoningSteps, mockOverlay, mockContextPack, detectChatAction, type ReasoningStep, type EvidenceRef } from "@/data/aureaMock";
+import { emitCoraAction } from "@/lib/coraBus";
 
 type Msg = {
   role: "user" | "assistant";
   content: React.ReactNode;
   time: string;
   evidence?: { label: string }[];
+  sentToCora?: { title: string; module: string };
 };
 
 export function PsyMatrixPanel() {
