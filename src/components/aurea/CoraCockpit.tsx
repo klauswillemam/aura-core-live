@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Check, X, Pencil, Pause, Loader2, ArrowUpRight, Undo2, Sparkles,
   ClipboardList, Activity, Brain, ShieldAlert, FlaskConical, Pill, BookOpen,
+  MessageSquare,
 } from "lucide-react";
 import { reasoningSteps, clinicalActions, type ClinicalAction } from "@/data/aureaMock";
+import { onCoraAction } from "@/lib/coraBus";
 import { toast } from "@/hooks/use-toast";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
