@@ -1,35 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Brain, FileText, Activity, BarChart3, BookOpen,
-  ShieldAlert, AlertTriangle, Sparkles, Send, Check, CircleDashed,
+  Brain, Activity, ShieldAlert, BookOpen, AlertTriangle, Sparkles, Send, Check,
+  CircleDashed, ExternalLink, AlertCircle, ArrowRight, Layers, FlaskConical, Pill,
 } from "lucide-react";
-import { mockContextPack } from "@/data/aureaMock";
+import {
+  reasoningSteps, mockOverlay, mockContextPack, type ReasoningStep, type EvidenceRef,
+} from "@/data/aureaMock";
 
-type StepKind =
-  | "context" | "memory" | "document" | "signals" | "risk"
-  | "scales" | "evidence" | "compose";
-
-type Step = {
-  id: string;
-  kind: StepKind;
-  tag: string;
-  typing: string;
-  icon: React.ComponentType<{ className?: string }>;
+const TAG_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
+  OVERLAY: Sparkles,
+  CONTEXTPACK: Brain,
+  SINAIS: Activity,
+  LACUNAS: AlertTriangle,
+  RISCO: ShieldAlert,
+  EVIDÊNCIA: BookOpen,
+  INTERAÇÕES: Pill,
+  AÇÕES: Layers,
 };
 
-const STEPS: Step[] = [
-  { id: "s0", kind: "context",  tag: "CONTEXTO",      icon: Sparkles,      typing: "Analisando contexto clínico…" },
-  { id: "s1", kind: "memory",   tag: "MEMÓRIA",       icon: Brain,         typing: "Lendo memória do paciente…" },
-  { id: "s2", kind: "document", tag: "DOCUMENTO",     icon: FileText,      typing: "Recuperando documento da última consulta…" },
-  { id: "s3", kind: "signals",  tag: "SINAIS",        icon: Activity,      typing: "Sinais detectados pelo PsyMatrix…" },
-  { id: "s4", kind: "risk",     tag: "RADAR DE RISCO",icon: ShieldAlert,   typing: "Identificando radar de risco…" },
-  { id: "s5", kind: "scales",   tag: "ESCALAS",       icon: BarChart3,     typing: "Verificando escalas aplicadas…" },
-  { id: "s6", kind: "evidence", tag: "EVIDÊNCIAS",    icon: BookOpen,      typing: "Consultando evidências científicas…" },
-  { id: "s7", kind: "compose",  tag: "PRÓXIMAS AÇÕES",icon: AlertTriangle, typing: "Compondo próximas ações sugeridas…" },
+const SUGGESTIONS = [
+  "Aplicar PHQ-9 + ISI",
+  "Solicitar workup laboratorial",
+  "Aplicar C-SSRS",
+  "Revisar interações",
+  "Gerar EEM",
 ];
-
-const SUGGESTIONS = ["Gerar EEM", "Aplicar PHQ-9", "Criar encaminhamento", "Buscar evidência", "Revisar interações"];
-const SUMMARY = "Análise concluída · 4 sinais · 3 lacunas · 2 evidências · 8 ações sugeridas";
 
 function nowTime() {
   const d = new Date();
@@ -39,48 +34,50 @@ function nowTime() {
 export function AureaCoraLive() {
   const [active, setActive] = useState(0);
   const [typed, setTyped] = useState("");
-  const [phase, setPhase] = useState<"typing" | "payload" | "fading">("typing");
-  const [doneTags, setDoneTags] = useState<string[]>([]); // last 2-3 ghosted lines
+  const [phase, setPhase] = useState<"typing" | "reveal">("typing");
+  const [revealed, setRevealed] = useState<string[]>([]); // step ids fully revealed (kept in feed)
   const [cmd, setCmd] = useState("");
 
-  const isFinished = active >= STEPS.length;
-  const current = STEPS[active];
+  const isFinished = active >= reasoningSteps.length;
+  const current = reasoningSteps[active];
 
-  // typing engine
+  // typing engine — type the OBSERVATION line, then reveal full payload
   useEffect(() => {
     if (isFinished) return;
     if (phase !== "typing") return;
-    const target = current.typing;
+    const target = current.observation;
     if (typed.length < target.length) {
-      const t = setTimeout(() => setTyped(target.slice(0, typed.length + 1)), 24);
+      const t = setTimeout(() => setTyped(target.slice(0, typed.length + 2)), 14);
       return () => clearTimeout(t);
     }
-    // finished typing → reveal payload
-    const t = setTimeout(() => setPhase("payload"), 280);
+    const t = setTimeout(() => setPhase("reveal"), 220);
     return () => clearTimeout(t);
   }, [typed, phase, current, isFinished]);
 
-  // payload visible window → fade → next
+  // reveal window → push to feed → next step
   useEffect(() => {
     if (isFinished) return;
-    if (phase !== "payload") return;
-    const t = setTimeout(() => setPhase("fading"), 1500);
-    return () => clearTimeout(t);
-  }, [phase, isFinished]);
-
-  useEffect(() => {
-    if (isFinished) return;
-    if (phase !== "fading") return;
+    if (phase !== "reveal") return;
     const t = setTimeout(() => {
-      setDoneTags((d) => [...d.slice(-2), STEPS[active].tag]);
+      setRevealed((r) => [...r, current.id]);
       setTyped("");
       setPhase("typing");
       setActive((a) => a + 1);
-    }, 600);
+    }, 1100);
     return () => clearTimeout(t);
-  }, [phase, active, isFinished]);
+  }, [phase, current, isFinished]);
 
-  const ghostTrail = useMemo(() => doneTags.slice(-3), [doneTags]);
+  const finishedSteps = useMemo(
+    () => reasoningSteps.filter((s) => revealed.includes(s.id)),
+    [revealed]
+  );
+
+  const summary = useMemo(() => {
+    const evidenceLinked = finishedSteps.filter((s) => s.evidence).length;
+    const evidenceMissing = finishedSteps.filter((s) => !s.evidence).length;
+    const actions = finishedSteps.filter((s) => s.suggestedAction).length;
+    return { evidenceLinked, evidenceMissing, actions };
+  }, [finishedSteps]);
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-border bg-card-elev shadow-card">
@@ -95,52 +92,55 @@ export function AureaCoraLive() {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
           </span>
           <span className="text-[10px] uppercase tracking-[0.24em] text-foreground font-semibold">
-            ÁUREA CORA · Live
+            PsyMatrix · raciocínio ao vivo
           </span>
           <span className="text-[10px] text-muted-foreground/70">
-            {isFinished ? "análise concluída" : "runtime ativo"}
+            {isFinished ? "análise concluída" : "lendo Overlay + ContextPack"}
           </span>
         </div>
         <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-          Clinical Reasoning Stream
+          fonte viva: Overlay · canônica: ContextPack
         </span>
       </header>
 
-      {/* Runtime surface — fluid, ephemeral */}
-      <div className="relative px-6 py-7 min-h-[340px] flex flex-col">
-        {!isFinished ? (
-          <>
-            {/* ghost trail of last completed steps */}
-            <div className="space-y-1 mb-5 min-h-[54px]">
-              {ghostTrail.map((tag, i) => {
-                const opacity = 0.18 + i * 0.12;
-                return (
-                  <div
-                    key={`${tag}-${i}`}
-                    className="flex items-center gap-2 text-[11px] text-muted-foreground transition-all"
-                    style={{ opacity }}
-                  >
-                    <Check className="h-3 w-3 text-success/60" strokeWidth={2.5} />
-                    <span className="uppercase tracking-[0.18em] text-[10px]">{tag}</span>
-                    <span className="flex-1 h-px bg-gradient-to-r from-border/60 to-transparent" />
-                  </div>
-                );
-              })}
-            </div>
+      {/* Provenance ribbon — makes the architecture visible */}
+      <div className="relative px-5 py-2.5 border-b border-border/40 bg-surface-soft/50">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-dot" />
+            <span className="text-foreground/80">Overlay ativo</span>
+            <span className="text-muted-foreground/70">· {mockOverlay.startedAt}</span>
+          </span>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            <Brain className="h-3 w-3" />
+            ContextPack canônico (última: {mockContextPack.lastConsult.date})
+          </span>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            <BookOpen className="h-3 w-3" /> PsyEvidence pronto
+          </span>
+        </div>
+      </div>
 
-            {/* Active runtime line */}
-            <ActiveLine
-              step={current}
-              typed={typed}
-              phase={phase}
-            />
+      {/* Reasoning feed — auditable, persistent */}
+      <div className="relative px-5 py-5 min-h-[420px] flex flex-col gap-3">
+        {/* Already-revealed steps stay in the feed */}
+        {finishedSteps.map((step, idx) => (
+          <ReasoningEntry key={step.id} step={step} index={idx} state="done" />
+        ))}
 
-            {/* Subtle live sweep at the bottom */}
-            <div className="relative mt-auto h-px overflow-hidden stream-sweep bg-border/40" />
-          </>
-        ) : (
-          <FinishedSummary />
+        {/* Active step — typing observation, then revealing inference + evidence + action */}
+        {!isFinished && (
+          <ReasoningEntry
+            step={current}
+            index={finishedSteps.length}
+            state={phase}
+            typed={typed}
+          />
         )}
+
+        {isFinished && <FinishedSummary summary={summary} />}
       </div>
 
       {/* Command bar */}
@@ -168,7 +168,7 @@ export function AureaCoraLive() {
           <input
             value={cmd}
             onChange={(e) => setCmd(e.target.value)}
-            placeholder="Comando clínico…"
+            placeholder="Pedir à CORA para autorizar uma ação…"
             className="flex-1 bg-transparent outline-none text-[13px] placeholder:text-muted-foreground/60"
           />
           <button
@@ -190,184 +190,154 @@ export function AureaCoraLive() {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────── */
+/* ─────────────────────────── ReasoningEntry ─────────────────────────── */
 
-function ActiveLine({
-  step, typed, phase,
+function ReasoningEntry({
+  step, index, state, typed,
 }: {
-  step: Step; typed: string; phase: "typing" | "payload" | "fading";
+  step: ReasoningStep;
+  index: number;
+  state: "typing" | "reveal" | "done";
+  typed?: string;
 }) {
-  const Icon = step.icon;
+  const Icon = TAG_ICON[step.tag] ?? Sparkles;
+  const isTyping = state === "typing";
+  const showFull = state === "reveal" || state === "done";
+
   return (
-    <div
-      key={step.id}
-      className={`relative flex gap-4 items-start ${phase === "fading" ? "animate-payload-fade" : "animate-step-in"}`}
+    <article
+      className={`relative flex gap-3.5 rounded-xl border bg-card p-3.5 ${
+        state === "done"
+          ? "border-border shadow-soft animate-step-in"
+          : "border-primary/30 shadow-glow animate-step-in"
+      }`}
     >
       <div className="shrink-0 mt-0.5">
-        <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/8 text-primary ring-1 ring-primary/15">
-          {phase === "payload" || phase === "fading" ? (
-            <Icon className="h-4 w-4" />
+        <div
+          className={`grid h-8 w-8 place-items-center rounded-full ${
+            state === "done"
+              ? "bg-success/12 text-success ring-1 ring-success/20"
+              : "bg-primary/10 text-primary ring-1 ring-primary/20"
+          }`}
+        >
+          {state === "done" ? (
+            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+          ) : isTyping ? (
+            <CircleDashed className="h-3.5 w-3.5 animate-spin-slow" />
           ) : (
-            <CircleDashed className="h-4 w-4 animate-spin-slow" />
+            <Icon className="h-3.5 w-3.5" />
           )}
         </div>
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.22em] text-primary font-semibold">
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-semibold">
             {step.tag}
           </span>
           <span className="text-[10px] text-muted-foreground/50">·</span>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            {phase === "typing" ? "processando" : "concluído"}
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            fonte: {step.source}
           </span>
+          <span className="text-[10px] text-muted-foreground/50">·</span>
+          <span className="text-[10px] font-mono text-muted-foreground/70">
+            {`0${index + 1}`.slice(-2)}
+          </span>
+          {state !== "done" && (
+            <span className="ml-auto text-[10px] uppercase tracking-wider text-primary/80">
+              {isTyping ? "observando" : "raciocinando"}
+            </span>
+          )}
         </div>
 
-        <div className="mt-1 text-[15px] font-medium text-foreground leading-snug">
-          {phase === "typing" ? (
+        <p className="text-[13.5px] text-foreground leading-relaxed">
+          {isTyping ? (
             <>
               {typed}
               <span className="inline-block w-[2px] h-3.5 align-[-2px] bg-primary ml-0.5 animate-blink-caret" />
             </>
           ) : (
-            step.typing.replace(/…$/, "")
+            step.observation
           )}
-        </div>
+        </p>
 
-        {/* Ephemeral payload glimpse */}
-        {(phase === "payload" || phase === "fading") && (
-          <div className={`mt-3 ${phase === "fading" ? "" : "animate-payload-rise"}`}>
-            <StepPayload kind={step.kind} />
-          </div>
+        {showFull && (
+          <>
+            <p className="text-[12.5px] text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-2.5">
+              <span className="text-foreground/85 font-medium">Inferência clínica · </span>
+              {step.inference}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              <EvidenceChip evidence={step.evidence} />
+            </div>
+
+            {step.suggestedAction && (
+              <div className="flex items-start gap-2 mt-1 text-[11.5px] text-foreground/90 bg-surface-soft border border-border rounded-md px-2.5 py-1.5">
+                <ArrowRight className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <div>
+                    <span className="font-medium">Ação enviada para CORA:</span>{" "}
+                    {step.suggestedAction.title}
+                    <span className="text-muted-foreground"> · {step.suggestedAction.module}</span>
+                  </div>
+                  <div className="text-muted-foreground/85 mt-0.5">
+                    Motivo: {step.suggestedAction.reason}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mt-1">
+                    aguardando autorização do médico
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
-    </div>
+    </article>
   );
 }
 
-/* ─────────────────────────── ephemeral payloads ──────────────────────── */
-
-function StepPayload({ kind }: { kind: StepKind }) {
-  if (kind === "context") {
+function EvidenceChip({ evidence }: { evidence: EvidenceRef }) {
+  if (!evidence) {
     return (
-      <p className="text-[12.5px] text-muted-foreground leading-relaxed">
-        Paciente ativo · consulta em andamento · ContextPack pronto para leitura.
-      </p>
+      <span className="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full border border-dashed border-border bg-transparent text-muted-foreground">
+        <AlertCircle className="h-3 w-3" />
+        sem evidência vinculada — sugerir busca no PsyEvidence
+      </span>
     );
   }
-
-  if (kind === "memory") {
-    return (
-      <p className="text-[12.5px] text-muted-foreground leading-relaxed">
-        ContextPack carregado · 1 consulta anterior · 1 escala aplicada · 2 evidências salvas.
-      </p>
-    );
-  }
-
-  if (kind === "document") {
-    return (
-      <p className="text-[12.5px] text-muted-foreground leading-relaxed italic border-l-2 border-border pl-3">
-        “Insônia inicial + ruminação. Iniciado sertralina 25mg. Retorno 4 semanas.” — PsyNote · 12 abr
-      </p>
-    );
-  }
-
-  if (kind === "signals") {
-    return (
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        {mockContextPack.signals.map((s) => (
-          <span key={s.label} className="inline-flex items-center gap-1.5 text-[12px] text-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
-            {s.label}
-            <span className="font-mono text-[10.5px] text-muted-foreground">
-              {(s.weight * 100).toFixed(0)}%
-            </span>
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  if (kind === "risk") {
-    return (
-      <div className="flex flex-wrap gap-2">
-        {mockContextPack.risks.map((r) => (
-          <span
-            key={r.label}
-            className="inline-flex items-center gap-1.5 text-[11.5px] text-foreground"
-          >
-            <ShieldAlert className="h-3 w-3 text-accent" />
-            {r.label}
-            <span className="uppercase tracking-wider text-[10px] text-accent">{r.level}</span>
-          </span>
-        ))}
-        <span className="text-[11.5px] text-muted-foreground">
-          · sem alerta crítico ativo
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full border border-border bg-surface-soft text-foreground/85">
+      {evidence.strength && (
+        <span className="font-mono text-[10px] px-1 rounded bg-primary/10 text-primary">
+          {evidence.strength}
         </span>
-      </div>
-    );
-  }
-
-  if (kind === "scales") {
-    return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px]">
-        {mockContextPack.scales.map((s) => (
-          <span key={s.name} className="inline-flex items-center gap-1.5 text-foreground">
-            <BarChart3 className="h-3 w-3 text-primary/70" />
-            {s.name} <span className="font-mono">{s.score}/{s.max}</span>
-            <span className="text-muted-foreground">({s.severity})</span>
-          </span>
-        ))}
-        <span className="inline-flex items-center gap-1.5 text-highlight">
-          <AlertTriangle className="h-3 w-3" /> PHQ-9 pendente
-        </span>
-      </div>
-    );
-  }
-
-  if (kind === "evidence") {
-    return (
-      <ul className="space-y-1">
-        {mockContextPack.evidence.map((e) => (
-          <li key={e.title} className="flex items-start gap-2 text-[12.5px]">
-            <span className="mt-0.5 text-[10px] font-mono px-1.5 rounded bg-primary/10 text-primary">
-              {e.strength}
-            </span>
-            <span className="text-foreground">{e.title}</span>
-            <span className="text-muted-foreground">· {e.source}</span>
-          </li>
-        ))}
-      </ul>
-    );
-  }
-
-  if (kind === "compose") {
-    return (
-      <p className="text-[12.5px] text-muted-foreground leading-relaxed">
-        8 ações geradas com motivo, módulo de destino e payload de salvamento — abaixo em
-        <span className="text-foreground font-medium"> Next Actions</span>.
-      </p>
-    );
-  }
-
-  return null;
+      )}
+      <span>{evidence.source}</span>
+      <span className="text-muted-foreground">· {evidence.origin}</span>
+      <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+    </span>
+  );
 }
 
-function FinishedSummary() {
+function FinishedSummary({
+  summary,
+}: {
+  summary: { evidenceLinked: number; evidenceMissing: number; actions: number };
+}) {
   return (
-    <div className="flex-1 flex flex-col items-start justify-center gap-3 animate-fade-in">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+    <div className="rounded-xl border border-border bg-surface-soft/70 p-4 animate-fade-in">
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
         <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-dot" />
-        Runtime em standby · pronto para próximo comando
+        Raciocínio concluído · pronto para autorização
       </div>
-      <div className="text-[18px] font-medium text-foreground leading-snug">
-        {SUMMARY}
+      <div className="text-[15px] font-medium text-foreground leading-snug mb-2">
+        {summary.actions} ações sugeridas · {summary.evidenceLinked} com evidência vinculada · {summary.evidenceMissing} sem evidência (declaradas honestamente)
       </div>
-      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted-foreground">
-        <span>· Ansiedade · Sono · Humor · Ruminação</span>
-        <span>· PHQ-9, EEM, Interações pendentes</span>
-        <span>· CBT-I (A) · ISRS (A)</span>
+      <div className="text-[12px] text-muted-foreground leading-relaxed">
+        Nada será executado sem o seu aval. Cada ação carrega motivo, módulo de destino e o que será
+        salvo. Quando não há fonte para uma recomendação, o PsyMatrix declara explicitamente — não
+        inventa guideline.
       </div>
     </div>
   );
