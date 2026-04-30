@@ -308,9 +308,22 @@ function QueueRow({
   } as const;
 
   return (
-    <li className="group flex items-start gap-3 rounded-lg border border-border bg-card p-3 hover:border-primary/30 hover:shadow-soft transition animate-step-in">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-soft border border-border text-primary">
+    <li
+      className={`group flex items-start gap-3 rounded-lg border bg-card p-3 hover:shadow-soft transition animate-step-in ${
+        item.fromChat ? "border-primary/35 hover:border-primary/55" : "border-border hover:border-primary/30"
+      }`}
+      title={item.fromChat && item.chatQuery ? `Pedido no chat: "${item.chatQuery}"` : undefined}
+    >
+      <div className="relative grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-soft border border-border text-primary">
         <Icon className="h-4 w-4" />
+        {item.fromChat && (
+          <span
+            className="absolute -top-1.5 -right-1.5 grid h-4 w-4 place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-card-elev"
+            aria-label="vinda do chat"
+          >
+            <MessageSquare className="h-2.5 w-2.5" strokeWidth={2.5} />
+          </span>
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
