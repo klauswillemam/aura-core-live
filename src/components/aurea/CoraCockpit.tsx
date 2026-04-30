@@ -46,6 +46,20 @@ export function CoraCockpit() {
     });
   }, []);
 
+  // Listen for actions pushed from the PsyMatrix chat
+  useEffect(() => {
+    return onCoraAction((action) => {
+      setQueue((q) => {
+        if (q.find((x) => x.id === action.id)) return q;
+        return [{ ...action, state: "pending" }, ...q];
+      });
+      toast({
+        title: "Nova ação na fila da CORA",
+        description: `${action.title} — vinda do chat com PsyMatrix.`,
+      });
+    });
+  }, []);
+
   // Drive the running progress bar
   useEffect(() => {
     if (!running) return;
