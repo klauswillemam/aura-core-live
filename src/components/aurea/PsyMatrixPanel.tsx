@@ -97,18 +97,47 @@ function PanelBody() {
     const q = input;
     setMessages((m) => [...m, { role: "user", content: q, time: "agora" }]);
     setInput("");
+
     setTimeout(() => {
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          time: "agora",
-          content:
-            "Sugiro: (1) priorizar workup laboratorial pela queixa cognitiva nova + BZD crônico; (2) reaplicar PHQ-9 e ISI antes de qualquer ajuste; (3) revisar interação fluoxetina↔bupropiona via CYP2D6.",
-          evidence: [{ label: "NICE NG222" }, { label: "Cochrane 2024 · BZD" }],
-        },
-      ]);
-    }, 700);
+      const draft = detectChatAction(q);
+
+      if (draft) {
+        const action = {
+          id: `chat-${Date.now()}`,
+          title: draft.title,
+          reason: draft.reason,
+          module: draft.module,
+          saves: draft.saves,
+          workspaceLink: draft.workspaceLink,
+          priority: draft.priority,
+          icon: draft.icon,
+          fromChat: true as const,
+          chatQuery: q,
+        };
+        emitCoraAction(action);
+
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            time: "agora",
+            content: draft.replySummary,
+            evidence: draft.replyEvidence,
+            sentToCora: { title: draft.title, module: draft.module },
+          },
+        ]);
+      } else {
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            time: "agora",
+            content:
+              "Posso aprofundar — me diga se você quer evidência (abro PsyEvidence), uma escala (PsyScales), checagem de interação (PsyInteractions) ou exames (PsyClinic) e eu mando direto pra fila da CORA.",
+          },
+        ]);
+      }
+    }, 600);
   };
 
   return (
